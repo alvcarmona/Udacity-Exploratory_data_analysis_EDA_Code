@@ -1,0 +1,370 @@
+Lesson 5
+========================================================
+
+### Multivariate Data
+Notes:
+
+***
+
+### Moira Perceived Audience Size Colored by Age
+Notes:
+
+***
+
+### Third Qualitative Variable
+Notes:
+
+```{r Third Qualitative Variable}
+library(ggplot2)
+ggplot(aes(x = gender, y = age),
+       data = subset(pf, !is.na(gender))) + geom_histogram
+
+pf <- read.delim('/datasets/ud651/pseudo_facebook.tsv')
+suppressMessages(library(dplyr))
+
+library(dplyr)
+pf.fc_by_age_gender <- pf %>%
+  filter(!is.na(gender))%>%
+  group_by(age,gender)%>%
+  summarise(mean_friend_count = mean(friend_count),
+            median_friend_count = median(friend_count),
+            n = n()) %>%
+  ungroup() %>%
+  arrange(age)
+head(pf.fc_by_age_gender)
+```
+
+***
+
+### Plotting Conditional Summaries
+Notes:
+
+```{r Plotting Conditional Summaries}
+ggplot(aes(x=age, y=median_friend_count), data=pf.fc_by_age_gender) + geom_line(aes(color=gender)) 
+```
+
+***
+
+### Thinking in Ratios
+Notes:
+
+***
+
+### Wide and Long Format
+Notes:
+
+***
+
+### Reshaping Data
+Notes:
+
+```{r}
+install.packages('reshape2')
+library(reshape2)
+pf.fc_by_age_gender.wide <- dcast(pf.fc_by_age_gender, age ~ gender, value.var = 'median_friend_count')
+
+
+pf.fc_by_age_gender.wide <-     subset(pf.fc_by_age_gender[c('age', 'gender', 'median_friend_count')],                   !is.na(gender)) %>% 
+    spread(gender, median_friend_count) %>% 
+    mutate(ratio = male / female) 
+
+head(pf.fc_by_age_gender.wide)
+```
+
+
+***
+
+### Ratio Plot
+Notes:
+
+```{r Ratio Plot}
+ggplot(aes(x= age, y = female/male), data= pf.fc_by_age_gender.wide) + geom_line()+geom_hline(yintercept = 1, alpha = 0.3, linetype = 2)
+```
+
+***
+
+### Third Quantitative Variable
+Notes:
+
+```{r Third Quantitative Variable}
+pf$year_joined <- floor(2014-pf$tenure/365)
+```
+
+***
+
+### Cut a Variable
+Notes:
+
+```{r Cut a Variable}
+pf$year_joined.bucket <- cut(pf$year_joined, c(2004, 2009, 2011, 2012, 2014)) head(pf)
+```
+
+***
+
+### Plotting it All Together
+Notes:
+
+```{r Plotting it All Together}
+ggplot(aes(x = age, y = friend_count), 
+              data = subset(pf, !is.na(year_joined.bucket))) + 
+  geom_line(aes(color = year_joined.bucket), stat = 'summary', fun.y = median) 
+```
+
+***
+
+### Plot the Grand Mean
+Notes:
+
+```{r Plot the Grand Mean}
+ggplot(aes(x = age, y = friend_count), 
+              data = subset(pf, !is.na(year_joined.bucket))) + 
+  geom_line(aes(color = year_joined.bucket), stat = 'summary', fun.y = mean) + geom_line(stat='summary', fun.y=mean, linetype =2)
+```
+
+***
+
+### Friending Rate
+Notes:
+
+```{r Friending Rate}
+
+pf$friending_rate <- pf$friend_count / pf$tenure
+ss2  <- subset(pf, pf$tenure > 0)
+median(ss2$friending_rate)
+max(ss2$friending_rate)
+
+#Respuesta del tutorial:
+
+with(subset(pf, tenure >= 1), summary(friend_count / tenure)) 
+```
+
+***
+
+### Friendships Initiated
+Notes:
+# Create a line graph of mean of friendships_initiated per day (of tenure)
+# vs. tenure colored by year_joined.bucket.
+
+# You need to make use of the variables tenure,
+# friendships_initiated, and year_joined.bucket.
+
+# You also need to subset the data to only consider user with at least
+# one day of tenure.
+
+What is the median friend rate?
+
+What is the maximum friend rate?
+
+```{r Friendships Initiated}
+ggplot(aes(x=tenure, y=friendships_initiated/tenure), data =  subset(pf, tenure >= 1)) +   geom_line(aes(color = year_joined.bucket))
+```
+
+***
+
+### Bias-Variance Tradeoff Revisited
+# Instead of geom_line(), use geom_smooth() to add a smoother to the plot.
+# You can use the defaults for geom_smooth() but do color the line
+# by year_joined.bucket
+
+# ALTER THE CODE BELOW THIS LINE
+# ==============================================================================
+
+ggplot(aes(x = 7 * round(tenure / 7), y = friendships_initiated / tenure),
+       data = subset(pf, tenure > 0)) +
+  geom_line(aes(color = year_joined.bucket),
+            stat = "summary",
+            fun.y = mean)
+Notes:
+NOTE: The code changing the binning is substituting x = tenure in the plotting expressions with x = 7 * round(tenure / 7), etc., binning values by the denominator in the round function and then transforming back to the natural scale with the constant in front.
+
+http://scott.fortmann-roe.com/docs/BiasVariance.html
+```{r Bias-Variance Tradeoff Revisited}
+
+ggplot(aes(x = tenure, y = friendships_initiated / tenure),
+       data = subset(pf, tenure >= 1)) +
+  geom_smooth(aes(color = year_joined.bucket))
+
+ggplot(aes(x = 7 * round(tenure / 7), y = friendships_initiated / tenure),
+       data = subset(pf, tenure > 0)) +
+  geom_smooth(aes(color = year_joined.bucket))
+
+ggplot(aes(x = 30 * round(tenure / 30), y = friendships_initiated / tenure),
+       data = subset(pf, tenure > 0)) +
+  geom_smooth(aes(color = year_joined.bucket))
+
+ggplot(aes(x = 90 * round(tenure / 90), y = friendships_initiated / tenure),
+       data = subset(pf, tenure > 0)) +
+  geom_smooth(aes(color = year_joined.bucket))
+
+```
+
+***
+
+### Sean's NFL Fan Sentiment Study
+Notes:
+https://www.facebook.com/notes/facebook-data-science/the-emotional-highs-and-lows-of-the-nfl-season/10152033221418859
+http://en.wikipedia.org/wiki/National_Football_League
+http://seanjtaylor.com/
+
+***
+
+### Introducing the Yogurt Data Set
+Notes:
+
+***
+
+### Histograms Revisited
+Notes:
+
+```{r Histograms Revisited}
+yo <- read.csv("yogurt.csv")
+yo$id <- factor(yo$id)
+str(yo)
+ggplot(aes(x=price), data= yo) + geom_histogram()
+summary(yo)
+```
+
+***
+
+### Number of Purchases
+Notes:
+summary()
+# Create a new variable called all.purchases,
+# which gives the total counts of yogurt for
+# each observation or household.
+
+# One way to do this is using the transform
+# function. You can look up the function transform
+# and run the examples of code at the bottom of the
+# documentation to figure out what it does.
+
+# The transform function produces a data frame
+# so if you use it then save the result to 'yo'!
+
+# OR you can figure out another way to create the
+# variable.
+
+```{r Number of Purchases}
+#mi respuesta
+yo$all.purchases <- yo$strawberry + yo$blueberry + yo$pina.colada + yo$plain + yo$mixed.berry
+
+#tutorial
+yo <- transform(yo, all.purchases = strawberry + blueberry + pina.colada + plain + mixed.berry)
+```
+
+***
+
+### Prices over Time
+Notes:
+# Create a scatterplot of price vs time.
+
+# This will be an example of a time series plot.
+
+# Resolve overplotting issues by using
+# techniques you learned in Lesson 4.
+
+# What are some things that you notice?
+
+```{r Prices over Time}
+ggplot(aes(x=time, y=price), data = yo) + geom_point(alpha=1/20)  +
+  geom_smooth(method =  'lm', color='red')
+```
+
+***
+
+### Sampling Observations
+Notes:
+The citation for the original paper on the yogurt data set is Kim, Jaehwan, Greg M. Allenby, and Peter E. Rossi. "Modeling consumer demand for variety." Marketing Science 21.3 (2002): 229-250.
+
+***
+
+### Looking at Samples of Households
+Note: x %in% y returns a logical (boolean) vector the same length as x that says whether each entry in x appears in y. That is, for each entry in x, it checks to see whether it is in y. 
+
+This allows us to subset the data so we get all the purchases occasions for the households in the sample. Then, we create scatterplots of price vs. time and facet by the sample id. 
+
+
+Use the pch or shape parameter to specify the symbol when plotting points. Scroll down to 'Plotting Points' on QuickR's Graphical Parameters. http://www.statmethods.net/advgraphs/parameters.html
+```{r Looking at Sample of Households}
+#set the seed for a reproductible results
+set.seed(4230)
+sample.ids <- sample(levels(yo$id),16)
+
+ggplot(aes(x = time, y= price), data= subset(yo, id %in% sample.ids)) + facet_wrap( ~id) + geom_line() + geom_point(aes(size= all.purchases), pch = 1)
+
+set.seed(1000)
+sample.ids <- sample(levels(yo$id),16)
+
+ggplot(aes(x = time, y= price), data= subset(yo, id %in% sample.ids)) + facet_wrap( ~id) + geom_line() + geom_point(aes(size= all.purchases), pch = 1)
+```
+
+***
+
+### The Limits of Cross Sectional Data
+Notes:
+
+***
+
+### Many Variables
+Notes:
+
+***
+
+### Scatterplot Matrix
+Notes:
+
+Here's the scatterplot matrix as a pdf. https://s3.amazonaws.com/udacity-hosted-downloads/ud651/scatterplotMatrix.pdf
+
+You'll need to run the code install.packages('GGally') to install the package for creating this partiular scatterplot matrix.
+
+If the plot takes a long time to render or if you want to see some of the scatterplot matrix, then only examine a smaller number of variables. You can use the following code or select fewer variables. We recommend including gender (the 6th variable)! 
+
+pf_subset <- pf[ , c(2:7)] 
+
+You may also find that variable labels are on the outer edges of the scatterplot matrix, rather than on the diagonal. If you want labels in the diagonal, you can set the axisLabels = 'internal' argument in your ggpairs command.
+
+install.packages('GGally')
+```{r}
+library(GGally)
+theme_set(theme_minimal(20))
+
+set.seed(1836)
+pf_subset <- pf[,c(2:15)]
+names(pf_subset)
+ggpairs(pf_subset[sample.int(nrow(pf_subset), 1000), ])
+```
+
+### Even More Variables
+Notes:
+***
+
+### Heat Maps
+Notes:
+
+```{r}
+nci <- read.table("nci.tsv")
+colnames(nci) <- c(1:64)
+```
+
+```{r}
+nci.long.samp <- melt(as.matrix(nci[1:200,]))
+names(nci.long.samp) <- c("gene", "case", "value")
+head(nci.long.samp)
+
+ggplot(aes(y = gene, x = case, fill = value),
+  data = nci.long.samp) +
+  geom_tile() +
+  scale_fill_gradientn(colours = colorRampPalette(c("blue", "red"))(100))
+```
+
+
+***
+
+### Analyzing Three of More Variables
+Reflection:
+
+***
+
+Click **KnitHTML** to see all of your hard work and to have an html
+page of this lesson, your answers, and your notes!
+

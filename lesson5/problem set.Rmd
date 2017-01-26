@@ -1,0 +1,163 @@
+---
+title: "problemSet"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+You can also embed plots, for example:
+
+
+
+# Create a histogram of diamond prices.
+# Facet the histogram by diamond color
+# and use cut to color the histogram bars.
+
+# The plot should look something like this.
+# http://i.imgur.com/b5xyrOu.jpg
+
+# Note: In the link, a color palette of type
+# 'qual' was used to color the histogram using
+# scale_fill_brewer(type = 'qual')
+
+# This assignment is not graded and
+# will be marked as correct when you submit.
+```{r Price Histograms with Facet and Color}
+
+ ggplot(data = diamonds, aes(x = price))+ scale_fill_brewer(type = 'qual') + 
+  facet_wrap(~color)   + 
+  geom_histogram(binwidth = 10) 
+
+qplot(data=diamonds,x= price, fill= cut)+facet_wrap(~color)+ geom_bar()+ scale_fill_brewer(type= 'qual')+scale_x_log10()
+```
+
+```{r Price vs. Table Colored by Cut}
+#http://i.imgur.com/rQF9jQr.jpg
+ ggplot(data = diamonds, aes(x = table, y=price))+ scale_fill_brewer(type = 'qual') + 
+  geom_point(aes(color = cut)) 
+
+```
+```{r Price vs. Volume and Diamond Clarity}
+#http://i.imgur.com/excUpea.jpg
+ ggplot(data = diamonds, aes(x = x*y*z, y=price))+ scale_fill_brewer(type = 'div') + 
+  xlim(0,quantile(diamonds$y*diamonds$z*diamonds$x, 0.90)) +
+  geom_point(aes(color = clarity))+ scale_y_log10() 
+
+```
+
+```{r Proportion of Friendships Initiated }
+# Many interesting variables are derived from two or more others.
+# For example, we might wonder how much of a person's network on
+# a service like Facebook the user actively initiated. Two users
+# with the same degree (or number of friends) might be very
+# different if one initiated most of those connections on the
+# service, while the other initiated very few. So it could be
+# useful to consider this proportion of existing friendships that
+# the user initiated. This might be a good predictor of how active
+# a user is compared with their peers, or other traits, such as
+# personality (i.e., is this person an extrovert?).
+
+# Your task is to create a new variable called 'prop_initiated'
+# in the Pseudo-Facebook data set. The variable should contain
+# the proportion of friendships that the user initiated.
+
+pf <- transform(pf, prop_initiated = ifelse(friend_count == 0, 0, friendships_initiated/friend_count))
+
+
+
+```
+
+```{r prop_initiated vs. tenure }
+# Create a line graph of the median proportion of
+# friendships initiated ('prop_initiated') vs.
+# tenure and color the line segment by
+# year_joined.bucket.
+
+# Recall, we created year_joined.bucket in Lesson 5
+# by first creating year_joined from the variable tenure.
+# Then, we used the cut function on year_joined to create
+# four bins or cohorts of users.
+
+# (2004, 2009]
+# (2009, 2011]
+# (2011, 2012]
+# (2012, 2014]
+
+# The plot should look something like this.
+# http://i.imgur.com/vNjPtDh.jpg
+# OR this
+# http://i.imgur.com/IBN1ufQ.jpg   
+# https://discussions.udacity.com/t/problem-set-5-cant-create-line-graph-of-the-median-of-prop-initiated-vs-tenure-and-color-the-line-segment-by-year-joined-bucket/20438/3
+pf$year_joined <- floor(2014-pf$tenure/365)
+pf$year_joined.bucket <- cut(pf$year_joined, c(2004, 2009, 2011, 2012, 2014)) 
+
+ggplot(aes(x=tenure, y=prop_initiated),data=pf)+ geom_line(aes(color=year_joined.bucket) ,stat='summary',fun.y=median)
+
+
+```
+
+```{r Smoothing prop_initiated vs. tenure }
+# Smooth the last plot you created of
+# of prop_initiated vs tenure colored by
+# year_joined.bucket. You can bin together ranges
+# of tenure or add a smoother to the plot.
+
+# There won't be a solution image for this exercise.
+# You will answer some questions about your plot in
+# the next two exercises.
+
+# This assignment is not graded and
+# will be marked as correct when you submit.
+ ggplot(aes(x=tenure, y=prop_initiated),data=pf)+ geom_smooth(aes(color=year_joined.bucket) ,stat='summary',fun.y=median)
+
+#https://discussions.udacity.com/t/5-9-mean-of-the-group-with-the-largest-proportion-of-friendships-initiated/123899
+
+summary(subset(pf, year_joined.bucket =='(2012,2014]')$prop_initiated)
+```
+
+```{r Price/Carat Binned, Faceted, & Colored }
+# Create a scatter plot of the price/carat ratio
+# of diamonds. The variable x should be
+# assigned to cut. The points should be colored
+# by diamond color, and the plot should be
+# faceted by clarity.
+
+# The plot should look something like this.
+# http://i.imgur.com/YzbWkHT.jpg.
+
+# Note: In the link, a color palette of type
+# 'div' was used to color the histogram using
+# scale_color_brewer(type = 'div')
+
+# This assignment is not graded and
+# will be marked as correct when you submit.
+
+ggplot(aes(y=price/carat, x= cut), data = diamonds) + geom_point(aes(color=color)) + facet_wrap(~clarity) + scale_color_brewer(type = 'div')
+
+ggplot(aes(x = cut, y = price/carat), data = subset(diamonds, fill = color)) +
+  facet_wrap(~clarity) +
+  geom_point(aes(color = color), pch = 5, position = "jitter") +
+  scale_color_brewer(type = 'div')
+```
